@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head></head>
+  <body>
+    <form id="form">
+      <input type="file" accept="image/*" id="logo_input" />
+      <button type="submit">Upload Logo</button>
+    </form>
+
+    <img src="" alt="" id="logo_image" />
+    <script>
+      async function getSignedUploadUrl() {
+        const url = `http://localhost:8787/`;
+
+        const response = await fetch(url, {
+          method: "GET",
+        });
+
+        const {
+          result: { uploadURL },
+        } = await response.json();
+
+        return uploadURL;
+      }
+
+      async function uploadLogo(uploadURL, formData) {
+        const response = await fetch(uploadURL, {
+          method: "POST",
+          body: formData,
+        });
+
+        const {
+          result: { variants },
+        } = await response.json();
+
+        return variants.pop();
+      }
+
+      const form = document.getElementById("form");
+      const logoInput = document.getElementById("logo_input");
+      const logoImage = document.getElementById("logo_image");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          const logo = logoInput.files[0];
+
+          if (!logo) {
+            return;
+          }
+
+          const uploadURL = await getSignedUploadUrl();
+
+          const formData = new FormData();
+          formData.append("file", logo);
+
+          const imageURL = await uploadLogo(uploadURL, formData);
+
+          form.innerHTML = `<h3>Upload successful!, here is the link: ${imageURL}</h3>`;
+          logoImage.src = imageURL;
+        } catch (error) {
+          console.log(error);
+        }
+      });
+    </script>
+  </body>
+</html>
